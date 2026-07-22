@@ -8,6 +8,7 @@ import type ITemplateChoice from "../types/choices/ITemplateChoice";
 import { TemplateChoice } from "../types/choices/TemplateChoice";
 import { normalizeTemplateFolderPaths } from "../utilityObsidian";
 import { isCancellationError, reportError } from "../utils/errorUtils";
+import { tryOpenPluginSettings } from "../utils/openPluginSettings";
 
 export interface RunTemplateFromFolderParams {
 	/** When set, skips the picker and runs this template directly (CLI / scripted). */
@@ -49,21 +50,6 @@ export function hasConfiguredTemplateFolders(plugin: QuickAdd): boolean {
 	return (
 		normalizeTemplateFolderPaths(plugin.settings.templateFolderPaths).length > 0
 	);
-}
-
-/** Best-effort: open QuickAdd's settings tab so the user can configure a template folder. */
-function openQuickAddSettings(app: App, pluginId: string): void {
-	const setting = (
-		app as unknown as {
-			setting?: { open?: () => void; openTabById?: (id: string) => void };
-		}
-	).setting;
-	try {
-		setting?.open?.();
-		setting?.openTabById?.(pluginId);
-	} catch {
-		// best-effort only; the Notice already tells the user where to go.
-	}
 }
 
 function renderTemplateRow(path: string, el: HTMLElement): void {
@@ -122,7 +108,7 @@ export async function runTemplateFromFolder(
 					"QuickAdd: Set a template folder in Settings → QuickAdd → Templates & Properties to use “New note from template”.",
 					8000,
 				);
-				openQuickAddSettings(app, plugin.manifest.id);
+				tryOpenPluginSettings(app, plugin.manifest.id);
 				return;
 			}
 
